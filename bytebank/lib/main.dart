@@ -1,4 +1,4 @@
-import 'dart:ffi';
+// import 'dart:ffi';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -10,7 +10,7 @@ class ByteBankApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
-        body: FormularioTransferencia(),
+        body: ListaTransferencia(),
       ),
     );
   }
@@ -27,49 +27,59 @@ class FormularioTransferencia extends StatelessWidget {
       appBar: AppBar(title: const Text("Criando Transferência")),
       body: Column(
         children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TextField(
+          Editor(
               controller: _controladorCampoNumeroConta,
-              keyboardType: TextInputType.number,
-              style: TextStyle(
-                fontSize: 24.0,
-              ),
-              decoration: InputDecoration(
-                  labelText: "Número da Conta", hintText: "0000"),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TextField(
+              rotulo: "Número da Conta",
+              dica: "000"),
+          Editor(
               controller: _controladorCampoValor,
-              keyboardType: TextInputType.number,
-              style: TextStyle(
-                fontSize: 24.0,
-              ),
-              decoration: InputDecoration(
-                  icon: Icon(Icons.monetization_on),
-                  labelText: "Valor",
-                  hintText: "0000.00"),
-            ),
-          ),
+              rotulo: "Valor",
+              dica: "000.00",
+              icone: Icons.monetization_on),
           RaisedButton(
-            onPressed: () {
-              if (double.tryParse(_controladorCampoValor.text) != null &&
-                  int.tryParse(_controladorCampoNumeroConta.text) != null) {
-                final novaTransferencia = Transferencia(
-                    double.tryParse(_controladorCampoValor.text),
-                    int.tryParse(_controladorCampoNumeroConta.text));
-
-                debugPrint('$novaTransferencia');
-                Scaffold.of(context).showSnackBar(SnackBar(
-                  content: Text('$novaTransferencia'),
-                ));
-              }
-            },
             child: Text("Confirmar"),
+            onPressed: () => _criaTransferencia(context),
           ),
         ],
+      ),
+    );
+  }
+
+  void _criaTransferencia(BuildContext context) {
+    if (double.tryParse(_controladorCampoValor.text) != null &&
+        int.tryParse(_controladorCampoNumeroConta.text) != null) {
+      final novaTransferencia = Transferencia(
+          double.tryParse(_controladorCampoValor.text),
+          int.tryParse(_controladorCampoNumeroConta.text));
+
+      Navigator.pop(context, novaTransferencia);
+    }
+  }
+}
+
+class Editor extends StatelessWidget {
+  final TextEditingController controller;
+  final String rotulo;
+  final String dica;
+  final IconData icone;
+
+  const Editor({this.controller, this.rotulo, this.dica, this.icone});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: TextField(
+        controller: controller,
+        keyboardType: TextInputType.number,
+        style: TextStyle(
+          fontSize: 24.0,
+        ),
+        decoration: InputDecoration(
+          icon: icone != null ? Icon(icone) : null,
+          labelText: rotulo,
+          hintText: dica,
+        ),
       ),
     );
   }
@@ -91,6 +101,18 @@ class ListaTransferencia extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.add),
+        onPressed: () {
+          final Future<Transferencia> future = Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (BuildContext context) =>
+                      FormularioTransferencia()));
+          future.then((transferenciaRecebida) {            
+            Scaffold.of(context).showSnackBar(SnackBar(
+              content: Text('$transferenciaRecebida'),
+            ));
+          });
+        },
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomAppBar(
